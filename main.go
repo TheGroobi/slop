@@ -1,25 +1,24 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/thegroobi/slop/internal/lexer"
+	"github.com/thegroobi/slop/internal/parser"
 )
 
 const MIN_ARGS = 1
 const SLOPFILE_NAME = "Slopfile"
 
 func main() {
-	args := os.Args[1:]
-
-	err := validateArgs(args)
-	if err != nil {
-		fmt.Printf("%v: expected %d got %d\n", err, MIN_ARGS, len(args))
-		return
-	}
-
+	// args := os.Args[1:]
+	// err := validateArgs(args)
+	// if err != nil {
+	// 	fmt.Printf("%v: expected %d got %d\n", err, MIN_ARGS, len(args))
+	// 	return
+	// }
+	//
 	file, err := os.Open(SLOPFILE_NAME)
 	if err != nil {
 		fmt.Println("Could not read Slopfile", err)
@@ -45,20 +44,24 @@ func main() {
 		}
 	}
 
-	fmt.Println(tokens)
-
-	// parser := parser.NewParser(r)
-	// if parser != nil {
-	// 	fmt.Println("Slop parser initialized!")
-	// }
-	//
-
-}
-
-func validateArgs(args []string) error {
-	if len(args) < MIN_ARGS {
-		return errors.New("Invalid number of args")
+	parser := parser.NewParser(tokens)
+	if parser != nil {
+		fmt.Println("Slop parser initialized!")
 	}
 
-	return nil
+	m, err := parser.Parse()
+
+	if err != nil {
+		fmt.Println("Parser failed to parse:", err)
+	}
+
+	fmt.Println(m)
 }
+
+// func validateArgs(args []string) error {
+// 	if len(args) < MIN_ARGS {
+// 		return errors.New("Invalid number of args")
+// 	}
+//
+// 	return nil
+// }

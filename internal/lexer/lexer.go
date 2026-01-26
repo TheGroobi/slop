@@ -22,7 +22,7 @@ const (
 type Token struct {
 	Type    TokenType
 	Literal string
-	line    int
+	Line    int
 }
 
 type Lexer struct {
@@ -48,7 +48,7 @@ func (l *Lexer) NextToken() Token {
 	}
 
 	if l.eof {
-		return Token{Type: TOKEN_EOF, Literal: "", line: l.line}
+		return Token{Type: TOKEN_EOF, Literal: "", Line: l.line}
 	}
 
 	switch l.current {
@@ -58,23 +58,25 @@ func (l *Lexer) NextToken() Token {
 		}
 	case '.':
 		l.advance()
-		return Token{Type: TOKEN_DOT, Literal: ".", line: l.line}
+		return Token{Type: TOKEN_DOT, Literal: ".", Line: l.line}
 	case '[':
 		l.advance()
-		return Token{Type: TOKEN_LBRACKET, Literal: "[", line: l.line}
+		return Token{Type: TOKEN_LBRACKET, Literal: "[", Line: l.line}
 	case ']':
 		l.advance()
-		return Token{Type: TOKEN_RBRACKET, Literal: "]", line: l.line}
+		return Token{Type: TOKEN_RBRACKET, Literal: "]", Line: l.line}
 	case '\n':
 		l.advance()
 		l.line++
-		return Token{Type: TOKEN_NEWLINE, Literal: "\n", line: l.line}
+		return Token{Type: TOKEN_NEWLINE, Literal: "\n", Line: l.line}
 	case '"':
 		str := l.readString()
-		return Token{Type: TOKEN_STRING, Literal: str, line: l.line}
+		return Token{Type: TOKEN_STRING, Literal: str, Line: l.line}
 	default:
-		ident := l.readIdent()
-		return Token{Type: TOKEN_IDENT, Literal: ident, line: l.line}
+		if isLetter(l.current) {
+			ident := l.readIdent()
+			return Token{Type: TOKEN_IDENT, Literal: ident, Line: l.line}
+		}
 	}
 
 	ch := l.current
