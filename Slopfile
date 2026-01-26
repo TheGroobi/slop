@@ -1,0 +1,4 @@
+db.type["mariadb"]
+db.user["root"]
+db.name["myapp"]
+seed.dir["./seeds"]
