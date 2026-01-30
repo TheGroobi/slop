@@ -1,2 +1,4 @@
-slop*
 slop
+.env
+dist/
+build/
