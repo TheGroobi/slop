@@ -10,13 +10,15 @@ import (
 type TokenType = int
 
 const (
-	TOKEN_IDENT = iota
-	TOKEN_DOT
-	TOKEN_LBRACKET
-	TOKEN_RBRACKET
-	TOKEN_STRING
-	TOKEN_NEWLINE
-	TOKEN_EOF
+	TOKEN_IDENT        = iota // keyword
+	TOKEN_DOT                 // .
+	TOKEN_LBRACKET            // [
+	TOKEN_RBRACKET            // ]
+	TOKEN_STRING              // "
+	TOKEN_NEWLINE             // \n
+	TOKEN_EOF                 // EOF
+	TOKEN_DOUBLE_COLON        // ::
+	TOKEN_INTERP              // $var - variable reference
 )
 
 type Token struct {
@@ -59,6 +61,12 @@ func (l *Lexer) NextToken() Token {
 	case '.':
 		l.advance()
 		return Token{Type: TOKEN_DOT, Literal: ".", Line: l.line}
+	case ':':
+		l.advance()
+		if l.current == ':' {
+			l.advance()
+			return Token{Type: TOKEN_DOUBLE_COLON, Literal: "::", Line: l.line}
+		}
 	case '[':
 		l.advance()
 		return Token{Type: TOKEN_LBRACKET, Literal: "[", Line: l.line}
@@ -70,8 +78,12 @@ func (l *Lexer) NextToken() Token {
 		l.line++
 		return Token{Type: TOKEN_NEWLINE, Literal: "\n", Line: l.line}
 	case '"':
-		str := l.readString()
+		str := l.readUntil('"')
 		return Token{Type: TOKEN_STRING, Literal: str, Line: l.line}
+	case '$':
+		l.advance()
+		ident := l.readDottedIdent()
+		return Token{Type: TOKEN_INTERP, Literal: ident, Line: l.line}
 	default:
 		if isLetter(l.current) {
 			ident := l.readIdent()
@@ -106,16 +118,26 @@ func (l *Lexer) readIdent() string {
 	return sb.String()
 }
 
-func (l *Lexer) readString() string {
+func (l *Lexer) readDottedIdent() string {
 	var sb strings.Builder
-	l.advance() // skip initial string quote
-
-	for l.current != '"' && !l.eof {
+	for isLetter(l.current) || l.current == '.' {
 		sb.WriteRune(l.current)
 		l.advance()
 	}
 
-	l.advance() // skip last string quote
+	return sb.String()
+}
+
+func (l *Lexer) readUntil(end rune) string {
+	var sb strings.Builder
+	l.advance() // skip initializer
+
+	for l.current != end && !l.eof {
+		sb.WriteRune(l.current)
+		l.advance()
+	}
+
+	l.advance() // skip the finalizer
 
 	return sb.String()
 }

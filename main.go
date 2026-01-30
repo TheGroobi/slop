@@ -49,13 +49,15 @@ func main() {
 		fmt.Println("Slop parser initialized!")
 	}
 
-	m, err := parser.Parse()
+	slop, err := parser.Parse()
 
 	if err != nil {
-		fmt.Println("Parser failed to parse:", err)
+		fmt.Println("Parser failed:", err)
 	}
 
-	fmt.Println(m)
+	fmt.Println("runs: ", slop.Runs)
+	fmt.Println("config: ", slop.Config)
+	fmt.Println("vars: ", slop.Vars)
 }
 
 // func validateArgs(args []string) error {

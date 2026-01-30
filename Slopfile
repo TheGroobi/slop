@@ -1,4 +1,9 @@
-db.type["mariadb"]
-db.user["root"]
-db.name["myapp"]
-seed.dir["./seeds"]
+config::db.type["mariadb"]
+config::db.user["root"]
+config::db.name["myapp"]
+config::db.password["myapp"]
+
+var::seed.rbac["./seeds/rbac.sql"]
+
+run::migrate[$seed.rbac]
+
