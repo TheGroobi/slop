@@ -1,9 +1,10 @@
-config::db.type["mariadb"]
-config::db.user["root"]
-config::db.name["myapp"]
-config::db.password["myapp"]
+# config::db.type["mariadb"]
+# config::db.user[$env.DB_USER]
+# config::db.name[$env.DB_NAME]
+# config::db.password[$env.DB_PASSWORD]
 
-var::seed.rbac["./seeds/rbac.sql"]
+source::env[".env"]
 
-run::migrate[$seed.rbac]
+var::seed.rbac["/home/groobi/rkd/app/seed/rbac.sql"]
 
+run::seed[$seed.rbac]

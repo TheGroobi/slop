@@ -2,8 +2,11 @@ package parser
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
+	"github.com/thegroobi/slop/internal/actions"
 	"github.com/thegroobi/slop/internal/lexer"
 )
 
@@ -42,7 +45,14 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			return nil, err
 		}
 
-		if strings.HasPrefix(v, "$") {
+		if strings.HasPrefix(v, "$env") {
+			envKey := v[5:]
+			envVal := os.Getenv(envKey)
+			if envVal == "" {
+				return nil, fmt.Errorf("line %d: environmental variable not set: %s", p.current.Line, envKey)
+			}
+			v = envVal
+		} else if strings.HasPrefix(v, "$") {
 			varName := v[1:]
 			res, ok := slop.Vars[varName]
 			if !ok {
@@ -56,13 +66,25 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			slop.Config[k] = v
 		case DIR_VAR:
 			slop.Vars[k] = v
+		case DIR_SOURCE:
+			action, err := actions.ParseAction(k)
+			if err != nil {
+				return nil, err
+			} else if action != actions.ACT_ENV {
+				return nil, fmt.Errorf("line %d: unknonwn action for source directive - allowed actions are: env", p.current.Line)
+			}
+			if err = godotenv.Load(v); err != nil {
+				return nil, err
+			}
+
+			fmt.Printf("✔ .env file loaded from %s\n", v)
 		case DIR_RUN:
-			action, err := ParseAction(k)
+			action, err := actions.ParseAction(k)
 			if err != nil {
 				return nil, err
 			}
 
-			slop.Runs = append(slop.Runs, RunAction{
+			slop.Runs = append(slop.Runs, actions.Action{
 				Action: action,
 				Args:   v,
 				Line:   p.current.Line,

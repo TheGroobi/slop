@@ -58,6 +58,7 @@ func (l *Lexer) NextToken() Token {
 		for l.current != '\n' && !l.eof {
 			l.advance()
 		}
+		return l.NextToken()
 	case '.':
 		l.advance()
 		return Token{Type: TOKEN_DOT, Literal: ".", Line: l.line}
@@ -143,5 +144,5 @@ func (l *Lexer) readUntil(end rune) string {
 }
 
 func isLetter(ch rune) bool {
-	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z' || ch == '_')
 }

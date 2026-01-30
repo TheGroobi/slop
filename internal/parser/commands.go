@@ -1,33 +1,24 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/thegroobi/slop/internal/actions"
+)
 
 type DirectiveType int
-type ActionType int
 
 const (
 	DIR_RUN DirectiveType = iota
 	DIR_CONFIG
 	DIR_VAR
-)
-
-const (
-	ACT_SEED ActionType = iota
-	ACT_MIGRATE
-	ACT_BACKUP
-	ACT_DUMP
+	DIR_SOURCE
 )
 
 type Slopfile struct {
 	Config map[string]string // config::db.name["x"] → Config["db.name"] = "x"
 	Vars   map[string]string // var::seed.rbac["x"] → Vars["seed.rbac"] = "x"
-	Runs   []RunAction       // run::seed["x"] → append to Runs
-}
-
-type RunAction struct {
-	Action ActionType
-	Args   string
-	Line   int
+	Runs   []actions.Action  // run::seed["x"] → append to Runs
 }
 
 type Directive struct {
@@ -39,7 +30,7 @@ func NewSlopfile() *Slopfile {
 	return &Slopfile{
 		Config: make(map[string]string),
 		Vars:   make(map[string]string),
-		Runs:   []RunAction{},
+		Runs:   []actions.Action{},
 	}
 }
 
@@ -47,6 +38,8 @@ func ParseDirective(s string) (DirectiveType, error) {
 	switch s {
 	case "run":
 		return DIR_RUN, nil
+	case "source":
+		return DIR_SOURCE, nil
 	case "config":
 		return DIR_CONFIG, nil
 	case "var":
@@ -56,16 +49,16 @@ func ParseDirective(s string) (DirectiveType, error) {
 	}
 }
 
-func ParseAction(s string) (ActionType, error) {
+func ParseAction(s string) (actions.ActionType, error) {
 	switch s {
 	case "seed":
-		return ACT_SEED, nil
+		return actions.ACT_SEED, nil
 	case "migrate":
-		return ACT_MIGRATE, nil
+		return actions.ACT_MIGRATE, nil
 	case "backup":
-		return ACT_BACKUP, nil
+		return actions.ACT_BACKUP, nil
 	case "dump":
-		return ACT_DUMP, nil
+		return actions.ACT_DUMP, nil
 	default:
 		return -1, fmt.Errorf("unknown action: %s", s)
 	}

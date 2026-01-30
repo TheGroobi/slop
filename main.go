@@ -4,21 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/joho/godotenv"
+	"github.com/thegroobi/slop/internal/actions"
 	"github.com/thegroobi/slop/internal/lexer"
 	"github.com/thegroobi/slop/internal/parser"
 )
 
-const MIN_ARGS = 1
 const SLOPFILE_NAME = "Slopfile"
 
 func main() {
-	// args := os.Args[1:]
-	// err := validateArgs(args)
-	// if err != nil {
-	// 	fmt.Printf("%v: expected %d got %d\n", err, MIN_ARGS, len(args))
-	// 	return
-	// }
-	//
 	file, err := os.Open(SLOPFILE_NAME)
 	if err != nil {
 		fmt.Println("Could not read Slopfile", err)
@@ -26,12 +20,12 @@ func main() {
 	}
 	defer file.Close()
 
-	fmt.Println("Slopfile loaded 🤤")
+	godotenv.Load()
+
+	fmt.Println("✔ Slopfile loaded 🤤")
 
 	l := lexer.NewLexer(file)
-	if l != nil {
-		fmt.Println("Slop lexer initialized!")
-	}
+	fmt.Println("✔ Slop lexer initialized!")
 
 	var tokens []lexer.Token
 
@@ -45,25 +39,53 @@ func main() {
 	}
 
 	parser := parser.NewParser(tokens)
-	if parser != nil {
-		fmt.Println("Slop parser initialized!")
-	}
+	fmt.Println("✔ Slop parser initialized!")
 
 	slop, err := parser.Parse()
-
 	if err != nil {
 		fmt.Println("Parser failed:", err)
+		return
 	}
 
-	fmt.Println("runs: ", slop.Runs)
-	fmt.Println("config: ", slop.Config)
-	fmt.Println("vars: ", slop.Vars)
+	for _, run := range slop.Runs {
+		var err error
+		if len(slop.Config) > 0 {
+			err = actions.ValidateConfig(run.Action, slop.Config)
+		} else {
+			err = actions.ValidateEnv(run.Action)
+		}
+
+		if err != nil {
+			fmt.Println("Validation error:", err)
+			return
+		}
+
+		switch run.Action {
+		case actions.ACT_SEED:
+			// validate args later (check if valid dir / points to an sql file)
+			sa := actions.NewSeedAction(
+				run.Args,
+				getConfigOrEnv(slop.Config, "db.user", "DB_USER"),
+				getConfigOrEnv(slop.Config, "db.name", "DB_NAME"),
+				getConfigOrEnv(slop.Config, "db.password", "DB_PASSWORD"),
+			)
+			if err := run.RunSeed(sa); err != nil {
+				fmt.Println(err)
+			}
+			fmt.Printf("✔ Database %s Seeded properly!\n", slop.Config[actions.CFG_DB_NAME])
+		default:
+			fmt.Println("Action not valid - might be not implemented yet or missing")
+		}
+	}
 }
 
-// func validateArgs(args []string) error {
-// 	if len(args) < MIN_ARGS {
-// 		return errors.New("Invalid number of args")
-// 	}
-//
-// 	return nil
-// }
+func init() {
+	godotenv.Load()
+}
+
+func getConfigOrEnv(cfg map[string]string, cfgKey, envKey string) string {
+	if v := cfg[cfgKey]; v != "" {
+		return v
+	}
+	return os.Getenv(envKey)
+}
