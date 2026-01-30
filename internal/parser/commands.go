@@ -48,18 +48,3 @@ func ParseDirective(s string) (DirectiveType, error) {
 		return -1, fmt.Errorf("unknown directive: %s", s)
 	}
 }
-
-func ParseAction(s string) (actions.ActionType, error) {
-	switch s {
-	case "seed":
-		return actions.ACT_SEED, nil
-	case "migrate":
-		return actions.ACT_MIGRATE, nil
-	case "backup":
-		return actions.ACT_BACKUP, nil
-	case "dump":
-		return actions.ACT_DUMP, nil
-	default:
-		return -1, fmt.Errorf("unknown action: %s", s)
-	}
-}

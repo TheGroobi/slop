@@ -87,7 +87,7 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			slop.Runs = append(slop.Runs, actions.Action{
 				Action: action,
 				Args:   v,
-				Line:   p.current.Line,
+				Line:   p.current.Line - 1,
 			})
 		}
 

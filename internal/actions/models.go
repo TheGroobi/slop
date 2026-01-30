@@ -61,6 +61,10 @@ func (a *Action) RunSeed(s *SeedAction) error {
 		missing = append(missing, "database password")
 	}
 
+	if !strings.Contains(s.seedDir, ".sql") {
+		return fmt.Errorf("seed: line %d: failed file needs to be a valid SQL file", a.Line)
+	}
+
 	if len(missing) > 0 {
 		return fmt.Errorf("seed: line %d: missing required fields: %s", a.Line, strings.Join(missing, ", "))
 	}

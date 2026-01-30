@@ -36,6 +36,7 @@ func ValidateConfig(action ActionType, config map[string]string) error {
 
 	return nil
 }
+
 func ValidateEnv(action ActionType) error {
 	required, ok := RequiredEnv[action]
 	if !ok {
