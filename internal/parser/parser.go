@@ -39,10 +39,13 @@ func (p *Parser) Parse() (*Slopfile, error) {
 		if p.current.Type == lexer.TOKEN_NEWLINE {
 			p.advance()
 			continue
+		} else if p.current.Type == lexer.TOKEN_TASK_END {
+			p.advance()
+			task = ""
 		}
 
 		dir, k, v, err := p.parseDeclaration()
-		if err != nil || (k == "" && dir != DIR_TASK_END) || (v == "" && dir != DIR_TASK && dir != DIR_TASK_END) {
+		if err != nil || k == "" || (v == "" && dir != DIR_TASK) {
 			return nil, err
 		}
 
@@ -86,8 +89,6 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			fmt.Printf("✔ .env file loaded from %s\n", v)
 		case DIR_TASK:
 			task = k
-		case DIR_TASK_END:
-			task = ""
 		case DIR_RUN:
 			action, err := actions.ParseAction(k)
 			if err != nil {
@@ -125,13 +126,12 @@ func (p *Parser) parseDeclaration() (DirectiveType, string, string, error) {
 
 	dir, error := ParseDirective(p.current.Literal)
 	if error != nil {
-		return -1, "", "", fmt.Errorf("line %d: unexpected directive, available are: run, var, config", p.current.Line)
+		return -1, "", "", fmt.Errorf("line %d: unexpected directive, available are: run, var, config, @task", p.current.Line)
 	}
 	p.advance()
 
 	// return early when start task definition
-	switch dir {
-	case DIR_TASK:
+	if dir == DIR_TASK {
 		key := p.current.Literal
 		p.advance()
 
@@ -141,8 +141,6 @@ func (p *Parser) parseDeclaration() (DirectiveType, string, string, error) {
 
 		p.advance() // skip "{"
 		return dir, key, "", nil
-	case DIR_TASK_END:
-		return dir, "", "", nil
 	}
 
 	// ::

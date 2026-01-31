@@ -13,8 +13,7 @@ const (
 	DIR_CONFIG
 	DIR_VAR
 	DIR_SOURCE
-	DIR_TASK     // special task definition
-	DIR_TASK_END // special task end definition
+	DIR_TASK // special task definition
 )
 
 type Slopfile struct {
@@ -44,8 +43,6 @@ func ParseDirective(s string) (DirectiveType, error) {
 		return DIR_RUN, nil
 	case "@":
 		return DIR_TASK, nil
-	case "}":
-		return DIR_TASK_END, nil
 	case "source":
 		return DIR_SOURCE, nil
 	case "config":
