@@ -27,8 +27,27 @@ Used to set internal state or driver settings.
 
 ### Execution (`run::`)
 
-* `run::dir["path"]` - Changes the working directory for subsequent commands.
 * `run::seed["path/to/file.sql"]` - Executes a MariaDB seed command using the provided SQL file.
+
+### Tasks (`@task-name`)
+
+Tasks currently *only* support run commands
+
+```nginx
+# Setup a task
+@my-cool-task {
+    run::seed["/path/to/seed.sql"]
+    run::seed["/path/to/another/seed.sql"]
+    run::seed["/path/to/yet/another/seed.sql"]
+}
+
+# Run the task like a variable
+run::task[$my-cool-task]
+```
+
+> [!NOTE]
+> Tasks currently cannot be nested in themselves due to parser constraints
+> Tasks can invoke an infinite circular cycle: `@a` calling `run::task[$b]` and `@b` calling `run::task[$a]` will cause an infinite runtime loop.
 
 ## Example Slopfile
 
