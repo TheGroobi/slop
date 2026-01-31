@@ -1,7 +1,9 @@
-# config::db.type["mariadb"]
+# config::db.type["mariadb"] only currently support mariadb
 config::db.user[$env.DB_USER]
 config::db.name[$env.DB_NAME]
 config::db.password[$env.DB_PASSWORD]
+
+source::env[".env"]
 
 var::seed.rbac["/home/groobi/rkd/app/seed/rbac.sql"]
 
