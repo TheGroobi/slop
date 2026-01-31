@@ -1,10 +1,12 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type ActionType int
@@ -74,7 +76,11 @@ func (a *Action) RunSeed(s *SeedAction) error {
 
 func runSeedCmd(s *SeedAction) error {
 	seedCmd := fmt.Sprintf("cat %s | mariadb -u %s -p%s %s", s.seedDir, s.dbUser, s.dbPassword, s.dbName)
-	cmd := exec.Command("bash", "-c", seedCmd)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "bash", "-c", seedCmd)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
