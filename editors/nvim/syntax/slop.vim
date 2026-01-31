@@ -6,7 +6,7 @@ endif
 syn match slopComment "#.*$"
 
 " Directives: config, var, run (before ::)
-syn match slopDirective "\<\(config\|var\|run\)\>\ze\s*::"
+syn match slopDirective "\<\(source\|config\|var\|run\)\>\ze\s*::"
 
 " Double colon separator
 syn match slopSeparator "::"
@@ -17,6 +17,9 @@ syn match slopKey1 "\(::\s*\)\@<=\w\+" nextgroup=slopDot1
 
 " Actions (after run::): seed, migrate, backup, dump — defined after slopKey1 for priority
 syn match slopAction "\(run\s*::\)\@<=\s*\<\(seed\|migrate\|backup\|dump\)\>"
+" Sources (after source::): env — defined after slopKey1 for priority
+syn match slopAction "\(source\s*::\)\@<=\s*\<\(env\)\>"
+
 " Depth 2: after first dot            (e.g. type)
 syn match slopDot1 "\." contained nextgroup=slopKey2
 syn match slopKey2 "\w\+" contained nextgroup=slopDot2
