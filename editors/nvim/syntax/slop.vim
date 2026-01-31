@@ -11,6 +11,9 @@ syn match slopDirective "\<\(source\|config\|var\|run\)\>\ze\s*::"
 " Double colon separator
 syn match slopSeparator "::"
 
+syn match slopAt "@" nextgroup=slopTask
+syn match slopTask "[a-zA-Z_\-][a-zA-Z_\-]*" contained
+
 " Nested key depths: key1.key2.key3
 " Depth 1: first identifier after ::  (e.g. db)
 syn match slopKey1 "\(::\s*\)\@<=\w\+" nextgroup=slopDot1
@@ -28,7 +31,7 @@ syn match slopDot2 "\." contained nextgroup=slopKey3
 syn match slopKey3 "\w\+" contained
 
 " Brackets
-syn match slopBracket "\[\|\]"
+syn match slopBracket "\$[a-zA-Z_\-]\+\(\.[a-zA-Z_\-]\+\)*"
 
 " Strings
 syn region slopString start='"' end='"'
@@ -46,6 +49,8 @@ hi link slopDot1       Operator
 hi link slopKey2       Type
 hi link slopDot2       Operator
 hi link slopKey3       Constant
+hi link slopAt         Operator
+hi link slopTask       Function
 hi link slopBracket    Delimiter
 hi link slopString     String
 hi link slopVarRef     Special
