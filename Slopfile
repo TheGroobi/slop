@@ -1,10 +1,20 @@
 # config::db.type["mariadb"] only currently support mariadb
+source::env[".env"]
+
 config::db.user[$env.DB_USER]
 config::db.name[$env.DB_NAME]
 config::db.password[$env.DB_PASSWORD]
 
-source::env[".env"]
+var::seed.rbac["./app/seed/rbac.sql"]
+var::seed.form.questions["./app/seed/questions.sql"]
+var::seed.form.chapters["./app/seed/chapters.sql"]
 
-var::seed.rbac["/home/groobi/rkd/app/seed/rbac.sql"]
+@seed-base {
+    run::seed[$seed.rbac]
+    run::seed[$seed.form.questions]
+    run::seed[$seed.form.chapters]
+}
 
-run::seed[$seed.rbac]
+run::task[$seed-base]
+
+# run::seed[$seed.rbac]

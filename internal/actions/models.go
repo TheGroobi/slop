@@ -13,6 +13,7 @@ type ActionType int
 
 const (
 	ACT_SEED ActionType = iota
+	ACT_TASK            // task runner
 	ACT_MIGRATE
 	ACT_BACKUP
 	ACT_DUMP
@@ -63,8 +64,12 @@ func (a *Action) RunSeed(s *SeedAction) error {
 		missing = append(missing, "database password")
 	}
 
-	if !strings.Contains(s.seedDir, ".sql") {
+	if !strings.HasSuffix(s.seedDir, ".sql") {
 		return fmt.Errorf("seed: line %d: failed file needs to be a valid SQL file", a.Line)
+	}
+
+	if _, err := os.Open(s.seedDir); err != nil {
+		return fmt.Errorf("seed: line %d: file does not exist", a.Line)
 	}
 
 	if len(missing) > 0 {
@@ -90,6 +95,8 @@ func ParseAction(s string) (ActionType, error) {
 	switch s {
 	case "seed":
 		return ACT_SEED, nil
+	case "task":
+		return ACT_TASK, nil
 	case "migrate":
 		return ACT_MIGRATE, nil
 	case "backup":
@@ -109,6 +116,8 @@ func (a ActionType) String() string {
 		return "seed"
 	case ACT_MIGRATE:
 		return "migrate"
+	case ACT_TASK:
+		return "task"
 	case ACT_BACKUP:
 		return "backup"
 	case ACT_DUMP:

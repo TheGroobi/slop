@@ -12,13 +12,16 @@ type TokenType = int
 const (
 	TOKEN_IDENT        = iota // keyword
 	TOKEN_DOT                 // .
+	TOKEN_AT                  // @
+	TOKEN_TASK_START          // {
+	TOKEN_TASK_END            // }
 	TOKEN_LBRACKET            // [
 	TOKEN_RBRACKET            // ]
 	TOKEN_STRING              // "
 	TOKEN_NEWLINE             // \n
 	TOKEN_EOF                 // EOF
 	TOKEN_DOUBLE_COLON        // ::
-	TOKEN_INTERP              // $var - variable reference
+	TOKEN_INTERP              // $var - variable reference / task reference
 )
 
 type Token struct {
@@ -68,6 +71,15 @@ func (l *Lexer) NextToken() Token {
 			l.advance()
 			return Token{Type: TOKEN_DOUBLE_COLON, Literal: "::", Line: l.line}
 		}
+	case '@':
+		l.advance()
+		return Token{Type: TOKEN_AT, Literal: "@", Line: l.line}
+	case '{':
+		l.advance()
+		return Token{Type: TOKEN_TASK_START, Literal: "{", Line: l.line}
+	case '}':
+		l.advance()
+		return Token{Type: TOKEN_TASK_END, Literal: "}", Line: l.line}
 	case '[':
 		l.advance()
 		return Token{Type: TOKEN_LBRACKET, Literal: "[", Line: l.line}
@@ -86,7 +98,7 @@ func (l *Lexer) NextToken() Token {
 		ident := l.readDottedIdent()
 		return Token{Type: TOKEN_INTERP, Literal: ident, Line: l.line}
 	default:
-		if isLetter(l.current) {
+		if isValidRune(l.current) {
 			ident := l.readIdent()
 			return Token{Type: TOKEN_IDENT, Literal: ident, Line: l.line}
 		}
@@ -111,7 +123,7 @@ func (l *Lexer) advance() {
 
 func (l *Lexer) readIdent() string {
 	var sb strings.Builder
-	for isLetter(l.current) {
+	for isValidRune(l.current) {
 		sb.WriteRune(l.current)
 		l.advance()
 	}
@@ -121,7 +133,7 @@ func (l *Lexer) readIdent() string {
 
 func (l *Lexer) readDottedIdent() string {
 	var sb strings.Builder
-	for isLetter(l.current) || l.current == '.' {
+	for isValidRune(l.current) || l.current == '.' {
 		sb.WriteRune(l.current)
 		l.advance()
 	}
@@ -143,6 +155,6 @@ func (l *Lexer) readUntil(end rune) string {
 	return sb.String()
 }
 
-func isLetter(ch rune) bool {
-	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z' || ch == '_')
+func isValidRune(ch rune) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_' || ch == '-'
 }

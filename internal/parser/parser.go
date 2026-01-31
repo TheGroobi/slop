@@ -33,6 +33,7 @@ func NewParser(tokens []lexer.Token) *Parser {
 
 func (p *Parser) Parse() (*Slopfile, error) {
 	slop := NewSlopfile()
+	task := ""
 
 	for p.current.Type != lexer.TOKEN_EOF {
 		if p.current.Type == lexer.TOKEN_NEWLINE {
@@ -41,7 +42,7 @@ func (p *Parser) Parse() (*Slopfile, error) {
 		}
 
 		dir, k, v, err := p.parseDeclaration()
-		if err != nil || k == "" || v == "" {
+		if err != nil || (k == "" && dir != DIR_TASK_END) || (v == "" && dir != DIR_TASK && dir != DIR_TASK_END) {
 			return nil, err
 		}
 
@@ -55,10 +56,15 @@ func (p *Parser) Parse() (*Slopfile, error) {
 		} else if strings.HasPrefix(v, "$") {
 			varName := v[1:]
 			res, ok := slop.Vars[varName]
-			if !ok {
-				return nil, fmt.Errorf("line %d: undefined variable: $%s", p.current.Line, varName)
+			if ok {
+				v = res
+			} else {
+				_, ok := slop.Tasks[varName]
+				if !ok {
+					return nil, fmt.Errorf("line %d: undefined: $%s", p.current.Line, varName)
+				}
+				v = varName
 			}
-			v = res
 		}
 
 		switch dir {
@@ -71,28 +77,39 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			if err != nil {
 				return nil, err
 			} else if action != actions.ACT_ENV {
-				return nil, fmt.Errorf("line %d: unknonwn action for source directive - allowed actions are: env", p.current.Line)
+				return nil, fmt.Errorf("line %d: unknown action for source directive - allowed actions are: env", p.current.Line)
 			}
 			if err = godotenv.Load(v); err != nil {
 				return nil, err
 			}
 
 			fmt.Printf("✔ .env file loaded from %s\n", v)
+		case DIR_TASK:
+			task = k
+		case DIR_TASK_END:
+			task = ""
 		case DIR_RUN:
 			action, err := actions.ParseAction(k)
 			if err != nil {
 				return nil, err
 			}
 
-			slop.Runs = append(slop.Runs, actions.Action{
+			run := actions.Action{
 				Action: action,
 				Args:   v,
 				Line:   p.current.Line - 1,
-			})
+			}
+
+			if task != "" {
+				slop.Tasks[task] = append(slop.Tasks[task], run)
+			} else {
+				slop.Runs = append(slop.Runs, run)
+			}
 		}
 
 	}
 
+	fmt.Println("✔ Slopfile has been parsed successfully")
 	return slop, nil
 }
 
@@ -106,12 +123,27 @@ func (p *Parser) advance() {
 func (p *Parser) parseDeclaration() (DirectiveType, string, string, error) {
 	// expect: IDENT(DIRECTIVE) DOUBLE_COLON IDENT(ACTION) DOT IDENT LBRACKET STRING RBRACKET
 
-	// directive - what to do
 	dir, error := ParseDirective(p.current.Literal)
-	if p.current.Type != lexer.TOKEN_IDENT || error != nil {
+	if error != nil {
 		return -1, "", "", fmt.Errorf("line %d: unexpected directive, available are: run, var, config", p.current.Line)
 	}
 	p.advance()
+
+	// return early when start task definition
+	switch dir {
+	case DIR_TASK:
+		key := p.current.Literal
+		p.advance()
+
+		if p.current.Type != lexer.TOKEN_TASK_START {
+			return -1, "", "", fmt.Errorf("line %d: unexpected task declaration missing opening bracket: \"{\"", p.current.Line)
+		}
+
+		p.advance() // skip "{"
+		return dir, key, "", nil
+	case DIR_TASK_END:
+		return dir, "", "", nil
+	}
 
 	// ::
 	if p.current.Type != lexer.TOKEN_DOUBLE_COLON {

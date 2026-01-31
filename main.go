@@ -47,7 +47,10 @@ func main() {
 		return
 	}
 
-	for _, run := range slop.Runs {
+	for len(slop.Runs) > 0 {
+		run := slop.Runs[0]
+		slop.Runs = slop.Runs[1:]
+
 		var err error
 		if len(slop.Config) > 0 {
 			err = actions.ValidateConfig(run.Action, slop.Config)
@@ -61,6 +64,9 @@ func main() {
 		}
 
 		switch run.Action {
+		case actions.ACT_TASK:
+			t := slop.Tasks[run.Args]
+			slop.Runs = append(t, slop.Runs...)
 		case actions.ACT_SEED:
 			// validate args later (check if valid dir / points to an sql file)
 			sa := actions.NewSeedAction(
@@ -69,9 +75,12 @@ func main() {
 				getConfigOrEnv(slop.Config, "db.name", "DB_NAME"),
 				getConfigOrEnv(slop.Config, "db.password", "DB_PASSWORD"),
 			)
+
 			if err := run.RunSeed(sa); err != nil {
 				fmt.Println(err)
+				return
 			}
+
 			fmt.Printf("✔ Database %s Seeded properly!\n", slop.Config[actions.CFG_DB_NAME])
 		default:
 			fmt.Println("Action not valid - might be not implemented yet or missing")
