@@ -2,3 +2,4 @@ slop
 .env
 dist/
 build/
+.fuse_hidden*

@@ -2,8 +2,6 @@ package parser
 
 import (
 	"fmt"
-
-	"github.com/thegroobi/slop/internal/actions"
 )
 
 type DirectiveType int
@@ -16,25 +14,9 @@ const (
 	DIR_TASK // special task definition
 )
 
-type Slopfile struct {
-	Config map[string]string           // config::db.name["x"] → Config["db.name"] = "x"
-	Vars   map[string]string           // var::seed.rbac["x"] → Vars["seed.rbac"] = "x"
-	Runs   []actions.Action            // run::seed["x"] → append to Runs
-	Tasks  map[string][]actions.Action // @task {...} → append to Tasks
-}
-
 type Directive struct {
 	Directive DirectiveType
 	Args      string
-}
-
-func NewSlopfile() *Slopfile {
-	return &Slopfile{
-		Config: make(map[string]string),
-		Vars:   make(map[string]string),
-		Runs:   []actions.Action{},
-		Tasks:  make(map[string][]actions.Action),
-	}
 }
 
 func ParseDirective(s string) (DirectiveType, error) {

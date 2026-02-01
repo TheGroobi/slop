@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/thegroobi/slop/internal/actions"
 	"github.com/thegroobi/slop/internal/lexer"
+	"github.com/thegroobi/slop/internal/slopfile"
 )
 
 const MAX_INDENTATION = 3
@@ -28,11 +29,12 @@ func NewParser(tokens []lexer.Token) *Parser {
 		p.current = tokens[0]
 	}
 
+	fmt.Println("✔ Slop parser initialized!")
+
 	return p
 }
 
-func (p *Parser) Parse() (*Slopfile, error) {
-	slop := NewSlopfile()
+func (p *Parser) Parse(slop *slopfile.Slopfile) (*slopfile.Slopfile, error) {
 	task := ""
 
 	for p.current.Type != lexer.TOKEN_EOF {
@@ -42,6 +44,7 @@ func (p *Parser) Parse() (*Slopfile, error) {
 		} else if p.current.Type == lexer.TOKEN_TASK_END {
 			p.advance()
 			task = ""
+			continue
 		}
 
 		dir, k, v, err := p.parseDeclaration()
@@ -98,7 +101,7 @@ func (p *Parser) Parse() (*Slopfile, error) {
 			run := actions.Action{
 				Action: action,
 				Args:   v,
-				Line:   p.current.Line - 1,
+				Line:   p.current.Line,
 			}
 
 			if task != "" {

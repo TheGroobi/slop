@@ -6,15 +6,17 @@ config::db.name[$env.DB_NAME]
 config::db.password[$env.DB_PASSWORD]
 
 var::seed.rbac["./app/seed/rbac.sql"]
-var::seed.form.questions["./app/seed/questions.sql"]
-var::seed.form.chapters["./app/seed/chapters.sql"]
+var::seed.form.questions["./app/seed/form-questions.sql"]
+var::seed.form.chapters["./app/seed/form-chapters.sql"]
 
-@seed-base {
+run::seed[$seed.rbac]
+
+@rbac {
     run::seed[$seed.rbac]
-    run::seed[$seed.form.questions]
-    run::seed[$seed.form.chapters]
 }
 
-run::task[$seed-base]
-
-# run::seed[$seed.rbac]
+@form {
+    run::seed[$seed.form.questions]
+    run::seed[$seed.form.chapters]
+    run::seed["./app/seed/form-chapters.sql"]
+}

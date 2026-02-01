@@ -69,13 +69,14 @@ func (a *Action) RunSeed(s *SeedAction) error {
 	}
 
 	if _, err := os.Open(s.seedDir); err != nil {
-		return fmt.Errorf("seed: line %d: file does not exist", a.Line)
+		return fmt.Errorf("seed: line %d: file does not exist\n%v", a.Line, err)
 	}
 
 	if len(missing) > 0 {
 		return fmt.Errorf("seed: line %d: missing required fields: %s", a.Line, strings.Join(missing, ", "))
 	}
 
+	fmt.Printf("✔ Database %s - Seeded properly with %s!\n", s.dbName, s.seedDir)
 	return runSeedCmd(s)
 }
 

@@ -45,6 +45,16 @@ Tasks currently *only* support run commands
 run::task[$my-cool-task]
 ```
 
+Slopfile does not populate tasks that are empty
+and `slop` command won't recognize them
+
+```nginx
+@empty-task {
+# won't get rendered anywhere / slop cli won't recognize it
+}
+```
+
+
 > [!NOTE]
 > Tasks currently cannot be nested in themselves due to parser constraints
 > Tasks can invoke an infinite circular cycle: `@a` calling `run::task[$b]` and `@b` calling `run::task[$a]` will cause an infinite runtime loop.

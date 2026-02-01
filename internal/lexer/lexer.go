@@ -40,8 +40,10 @@ type Lexer struct {
 func NewLexer(r io.Reader) *Lexer {
 	l := &Lexer{
 		input: bufio.NewReader(r),
-		line:  1,
+		line:  0,
 	}
+
+	fmt.Println("✔ Slop lexer initialized!")
 
 	l.advance()
 	return l
@@ -157,4 +159,19 @@ func (l *Lexer) readUntil(end rune) string {
 
 func isValidRune(ch rune) bool {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_' || ch == '-'
+}
+
+func (l *Lexer) Lex() []Token {
+	var tokens []Token
+
+	for {
+		tok := l.NextToken()
+		tokens = append(tokens, tok)
+
+		if tok.Type == TOKEN_EOF {
+			break
+		}
+	}
+
+	return tokens
 }
