@@ -76,12 +76,11 @@ func (a *Action) RunSeed(s *SeedAction) error {
 		return fmt.Errorf("seed: line %d: missing required fields: %s", a.Line, strings.Join(missing, ", "))
 	}
 
-	fmt.Printf("✔ Database %s - Seeded properly with %s!\n", s.dbName, s.seedDir)
-	return runSeedCmd(s)
+	return s.runSeedCmd()
 }
 
-func runSeedCmd(s *SeedAction) error {
-	seedCmd := fmt.Sprintf("cat %s | mariadb -u %s -p%s %s", s.seedDir, s.dbUser, s.dbPassword, s.dbName)
+func (s *SeedAction) runSeedCmd() error {
+	seedCmd := fmt.Sprintf("cat %s | mariadb -u %s -p'%s' %s", s.seedDir, s.dbUser, s.dbPassword, s.dbName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -90,6 +89,20 @@ func runSeedCmd(s *SeedAction) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func (s *SeedAction) ValidateDbConn() error {
+	statusCmd := fmt.Sprintf("mariadb -u %s -p%s %s -e \"SELECT 1\"", s.dbUser, s.dbPassword, s.dbName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "bash", "-c", statusCmd)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("Database connection invalid: %s", err)
+	}
+	return nil
 }
 
 func ParseAction(s string) (ActionType, error) {

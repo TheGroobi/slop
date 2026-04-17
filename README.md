@@ -93,3 +93,23 @@ go build -o slop
 
 
 *Default behavior: looks for `Slopfile` in the execution directory.*
+
+## Releases
+
+Releases are automated via [goreleaser](https://goreleaser.com/) on tag pushes.
+
+Cut a new release:
+
+```bash
+git tag v0.1.0
+git push --tags
+```
+
+The GitHub Actions release workflow builds Linux/macOS binaries (amd64 + arm64), publishes them as a GitHub Release, and attaches checksums.
+
+Install from a release:
+
+```bash
+curl -L https://github.com/thegroobi/slop/releases/latest/download/slop_Linux_x86_64.tar.gz | tar xz
+sudo mv slop /usr/local/bin/
+```

@@ -9,20 +9,22 @@ import (
 )
 
 type Slopfile struct {
-	Config        map[string]string           // config::db.name["x"] → Config["db.name"] = "x"
-	Vars          map[string]string           // var::seed.rbac["x"] → Vars["seed.rbac"] = "x"
-	Runs          []actions.Action            // run::seed["x"] → append to Runs
-	Tasks         map[string][]actions.Action // @task {...} → append to Tasks
-	DirectivesRun int
+	Config           map[string]string           // config::db.name["x"] → Config["db.name"] = "x"
+	Vars             map[string]string           // var::seed.rbac["x"] → Vars["seed.rbac"] = "x"
+	Runs             []actions.Action            // run::seed["x"] → append to Runs
+	Tasks            map[string][]actions.Action // @task {...} → append to Tasks
+	DirectivesRun    int
+	DatabaseVerified bool
 }
 
 func NewSlopfile() *Slopfile {
 	return &Slopfile{
-		Config:        make(map[string]string),
-		Vars:          make(map[string]string),
-		Runs:          []actions.Action{},
-		Tasks:         make(map[string][]actions.Action),
-		DirectivesRun: 0,
+		Config:           make(map[string]string),
+		Vars:             make(map[string]string),
+		Runs:             []actions.Action{},
+		Tasks:            make(map[string][]actions.Action),
+		DatabaseVerified: false,
+		DirectivesRun:    0,
 	}
 }
 
@@ -64,17 +66,25 @@ func (slop *Slopfile) RunQueue(q []actions.Action) error {
 		switch run.Action {
 		case actions.ACT_TASK:
 			t := slop.Tasks[run.Args]
-			q = append(t, slop.Runs...)
+			q = append(t, q...)
 		case actions.ACT_SEED:
+			seedDir := run.Args
+			dbName := getConfigOrEnv(slop.Config, "db.name", "DB_NAME")
 			sa := actions.NewSeedAction(
-				run.Args,
+				seedDir,
 				getConfigOrEnv(slop.Config, "db.user", "DB_USER"),
-				getConfigOrEnv(slop.Config, "db.name", "DB_NAME"),
+				dbName,
 				getConfigOrEnv(slop.Config, "db.password", "DB_PASSWORD"),
 			)
 
+			if !slop.DatabaseVerified {
+				slop.verifyDatabase(sa)
+			}
+
 			if err := run.RunSeed(sa); err != nil {
 				return err
+			} else {
+				fmt.Printf("✔ Database %s - Seeded properly with %s!\n", dbName, seedDir)
 			}
 		default:
 			return fmt.Errorf("Action not valid - might be not implemented yet or missing")
@@ -109,4 +119,14 @@ func (slop *Slopfile) validateArgs(args []string) error {
 	}
 
 	return nil
+}
+
+func (slop *Slopfile) verifyDatabase(sa *actions.SeedAction) error {
+	if err := sa.ValidateDbConn(); err != nil {
+		return err
+	} else {
+		slop.DatabaseVerified = true
+	}
+	return nil
+
 }
